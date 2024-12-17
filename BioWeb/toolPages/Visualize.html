@@ -1,0 +1,211 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8" />
+        <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <link rel="stylesheet" href="https://unpkg.com/element-ui/lib/theme-chalk/index.css" />
+        <link rel="stylesheet" href="/BioWeb/styles/toolpage.css" />
+        <!-- Molstar CSS & JS -->
+        <link
+          rel="stylesheet"
+          type="text/css"
+          href="https://cdn.jsdelivr.net/npm/pdbe-molstar@3.2.0/build/pdbe-molstar.css"
+        />
+    </head>
+
+    <body>
+        <div id="app">
+            <div id="topSav" style="width: 800px;  height: 50px;">
+                <div>
+                    <span  style="font-size: 28px; color: black;font-weight:bold">Online Molecule Viewer</span>
+                </div>
+            </div>
+
+            <div id="ntopSav">
+                <span style="font-size: 16px; color: gray"></span>
+            </div>
+            
+            <div id="inputFile" style="margin-top: 20px; width: 600px;border: 1px solid rgb(219, 216, 216)">
+              <div style="padding:20px 20px 0px 20px;">
+                <span class="inputstyle" style="font-weight: bold;">Input protein PDB structure</span>
+                <el-radio-group v-model="inputMethod" @change="toggleInputs">
+                    <el-radio label="id" class="custom-radio">
+                        <div class="inputmargin">
+                            <span class="inputstyle">Input the PDB ID of the protein structure.</span>
+                        </div>
+                    </el-radio>
+                    <div>
+                        <el-input placeholder="e.g. 1tup" v-model="prot_id" class="changetext" :disabled="isIdDisabled">
+                            <template slot="prepend"><span class="innerspan">PDB ID</span></template>
+                        </el-input>
+                    </div>
+                    <el-radio label="file" class="custom-radio">
+                        <div class="inputmargin">
+                            <span class="inputstyle">Or upload the structure file(.pdb or .cif).</span>
+                        </div>
+                    </el-radio>    
+                    <div>
+                        <el-upload class="upload-demo" action="#" :file-list="fileList" :auto-upload="false" :limit="1" :on-change="handleChange" ref="upload" :disabled="isPdbFileDisabled" accept=".pdb,.cif">
+                            <el-button slot="trigger" size="small" style="position: sticky; margin-left: 10px; font-size: 18px; width: 200px; height: 40px; background-color: rgba(125, 122, 122, 0.091)" :disabled="isPdbFileDisabled">
+                                upload
+                            </el-button>
+                        </el-upload>
+                    </div> 
+                </el-radio-group>
+
+                <hr class="subsplitline">
+                
+                <span class="inputstyle" style="font-weight: bold;">Run</span>
+
+                <div>
+                    <el-button type="primary" @click="viewer" style="margin:20px 20px 20px 0px; font-size: 18px; width: 100px; height: 40px">submit</el-button>
+                </div>
+
+                <div ref="viewerContainer"></div>
+              </div>
+            </div>
+
+            <div id="note" style="margin-top: 20px; width: 600px; height: 200px; border: 0px solid rgb(219, 216, 216)">
+                <div>
+                    <span style="color: gray; font-size: 20px">Notes:</span>
+                </div>
+
+                <div style="margin-top: 10px; font-size: 16px">
+                    <span style="color: gray">
+                        1. You can enter the PDB ID or upload a protein structure file to view it online.
+                    </span>
+                </div>
+
+                <div style="margin-top: 10px">
+                    <span style="color: gray; font-size: 16px">
+                        2. The uploaded file must be in PDB format (.pdb or .cif).
+                    </span>
+                </div>
+            </div>
+        </div>
+    </body>
+
+    <script src="/BioWeb/scripts/vue.js"></script>
+    <script src="https://unpkg.com/element-ui/lib/index.js"></script>
+    <script
+    type="text/javascript"
+    src="https://cdn.jsdelivr.net/npm/pdbe-molstar@3.2.0/build/pdbe-molstar-plugin.js"
+    ></script>
+
+    <script>
+        new Vue({
+            el: "#app",
+            data() {
+                return {
+                    inputMethod: "id",
+                    isIdDisabled: false,
+                    isPdbFileDisabled: true,
+                    prot_id: "",
+                    fileList: [],
+                    viewerInstance: null,
+                    fileUrl:'',
+                    fileFormat: '',
+                };
+            },
+            methods: {
+                handleChange(file, fileList) {
+                    this.fileList = fileList;
+                    if (fileList.length > 0) {
+                      const uploadedFile = file.raw;
+                      const fileName = uploadedFile.name;
+                      if (fileName.endsWith('.cif')) {
+                          this.fileFormat = 'cif';
+                      } else {
+                          this.fileFormat = 'pdb';
+                      }
+                      this.fileUrl = URL.createObjectURL(uploadedFile);
+                    }
+                    console.log(this.fileList);
+                },
+                toggleInputs() {
+                    if (this.inputMethod === 'id') {
+                        this.isIdDisabled = false;
+                        this.isPdbFileDisabled = true;
+                        this.fileList = []; // 清空文件列表
+                    } else {
+                        this.isIdDisabled = true;
+                        this.isPdbFileDisabled = false;
+                        this.prot_id = ''; // 清空 PDB ID
+                    }
+                },
+                viewer(){
+                  // Create plugin instance
+                  this.viewerInstance = new PDBeMolstarPlugin();
+                  let options = {};
+                  // Set options (uncomment lines to explore various options)
+                  if (this.inputMethod === 'file' && this.fileUrl) {
+                    options={
+                      // DATA
+                      //moleculeId: this.prot_id,
+                      customData: {
+                        url: this.fileUrl,
+                        format: this.fileFormat,
+                        binary: false,
+                      },
+                      // assemblyId: '1',
+                      // defaultPreset: 'default', // default | unitcell | all-models |supercell
+                      // ligandView: { label_comp_id: 'REA' },
+                      // superposition
+                      // selection: {
+                      //   data: [
+                      //     {
+                      //       struct_asym_id: 'A',
+                      //       start_residue_number: 1,
+                      //       end_residue_number: 20,
+                      //       color: '#ffff00',
+                      //     },
+                      //   ],
+                      //   nonSelectedColor: '#ddccbb',
+                      // },
+
+                      // APPEARANCE
+                      // visualStyle: 'cartoon', // cartoon | ball-and-stick | carbohydrate | ellipsoid | gaussian-surface | molecular-surface | point | putty | spacefill
+                      // hideStructure: ['het', 'water'],
+                      // loadMaps: true,
+                      // mapSettings: { '2fo-fc': { opacity: 0.8, wireframe: true } },
+                      // bgColor: { r: 60, g: 0, b: 100 },
+                      // highlightColor: '#ffff00',
+                      // selectColor: '#77bbff',
+                      // lighting: 'flat', // flat | matte | glossy | metallic | plastic
+
+                      // BEHAVIOR
+                      // validationAnnotation: true,
+                      // domainAnnotation: true,
+                      // symmetryAnnotation: true,
+                      // pdbeUrl: 'https://www.ebi.ac.uk/pdbe/',
+                      // encoding: 'cif', // cif | bcif
+                      // lowPrecisionCoords: true,
+                      // selectInteraction: false,
+                      // granularity: 'chain', // element | residue | chain | entity | model | operator | structure | elementInstances | residueInstances | chainInstances
+                      // subscribeEvents: true,
+
+                      // INTERFACE
+                      // hideControls: true,
+                      // hideCanvasControls: ['expand', 'selection', 'animation', 'controlToggle', 'controlInfo']
+                      // sequencePanel: true,
+                      // pdbeLink: false,
+                      // loadingOverlay: true,
+                      // expanded: true,
+                      // landscape: true,
+                      // reactive: true,
+                    };
+                  }else if (this.inputMethod === 'id' && this.prot_id) {
+                    options = {
+                        moleculeId: this.prot_id,
+                    };
+                  }else{
+                    alert('Please input the PDB ID or upload the structure files(.pdb or .cif).');
+                    return;
+                  }
+                  this.viewerInstance.render(this.$refs.viewerContainer, options);
+                }        
+            },
+        });
+    </script>
+</html>

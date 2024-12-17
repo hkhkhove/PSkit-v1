@@ -1,0 +1,203 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8" />
+        <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <link rel="stylesheet" href="https://unpkg.com/element-ui/lib/theme-chalk/index.css" />
+        <link rel="stylesheet" href="/BioWeb/styles/toolpage.css" />
+    </head>
+
+    <body>
+        <div id="app">
+            <div id="topSav" style="width: 800px; height: 50px;">
+                <div>
+                    <span style="font-size: 28px; color: black;font-weight:bold">ESM2</span>
+                </div>
+            </div>
+
+            <div id="ntopSav">
+                <span style="font-size: 16px; color: gray">Transformer protein language model from the Meta Fundamental AI Research Protein Team (FAIR)</span>
+            </div>
+
+            <div id="inputFile" style="margin-top: 20px; width: 600px; border: 1px solid rgb(219, 216, 216)">
+
+                <el-form ref="form" style="margin: 20px 20px 0px 20px" :model="formdata">
+                    <span class="inputstyle" style="font-weight: bold;">Input protein Sequence</span>
+                    <el-radio-group v-model="inputMethod" @change="toggleInputs">
+                        <el-radio label="seq" class="custom-radio">
+                            <div class="inputmargin">
+                                <span class="inputstyle">Input a sequence of the protein.</span>
+                            </div>
+                        </el-radio>
+                        <div>
+                            <el-input placeholder="e.g. MEEEQDKSLA" v-model="formdata.prot_seq" class="changetext" :disabled="isSeqDisabled">
+                                <template slot="prepend"><span class="innerspan">Sequence</span></template>
+                            </el-input>
+                        </div>
+                        <el-radio label="file" class="custom-radio">
+                            <div class="inputmargin">
+                                <span class="inputstyle">Or upload the sequence files(.fasta).</span>
+                            </div>
+                        </el-radio>    
+                        <div>
+                            <el-upload class="upload-demo" action="#" :file-list="fileList" :auto-upload="false" multiple :on-change="handleChange" ref="upload" :disabled="isSeqFileDisabled">
+                                <el-button slot="trigger" size="small" style="position: sticky; margin-left: 10px; font-size: 18px; width: 200px; height: 40px; background-color: rgba(125, 122, 122, 0.091)" :disabled="isSeqFileDisabled">
+                                    upload
+                                </el-button>
+                            </el-upload>
+                        </div> 
+                    </el-radio-group>
+
+                    <hr class="subsplitline">
+
+                    <span class="inputstyle" style="font-weight: bold;">Run ESM2</span>
+
+                    <div>
+                        <el-button  type="primary" @click="onSubmit" style="margin:20px 20px 20px 0px; font-size: 18px; width: 100px; height: 40px">submit</el-button>
+                    </div>
+
+                </el-form>
+            </div>
+
+            <div id="note" style="margin-top: 20px; width: 600px; height: 150px; border: 0px solid rgb(219, 216, 216)">
+                <div>
+                    <span style="color: gray; font-size: 20px">Notes:</span>
+                </div>
+
+                <div style="margin-top: 10px; font-size: 16px">
+                    <span style="color: gray"
+                        >1. You can enter the protein sequence or upload a fasta file to obtain a protein representation..</span
+                    >
+                </div>
+
+                <div style="margin-top: 10px">
+                    <span style="color: gray; font-size: 16px">
+                        2. The uploaded file must be in fasta format. The file should contain only one protein sequence.
+                    </span>
+                </div>
+
+                <div style="margin-top: 10px">
+                    <span style="color: gray; font-size: 16px">
+                        3. This tool is esm2_t30_150M_UR50D, as implemented in its official GitHub repository. For more details, please visit <a href="https://github.com/facebookresearch/esm" target="_blank" style="color: blue; text-decoration: underline;">ESM GitHub</a>.
+                    </span>
+                </div>
+            </div>
+        </div>
+    </body>
+
+    <script src="/BioWeb/scripts/vue.js"></script>
+    <script src="https://unpkg.com/element-ui/lib/index.js"></script>
+
+    <script>
+        new Vue({
+            el: "#app",
+            data() {
+                return {
+                    inputMethod: "seq",
+                    isSeqDisabled: false,
+                    isSeqFileDisabled: true,
+                    formdata: {
+                        prot_id: "",
+                        chain_id: "",
+                        map_d_threshold: "",
+                        map_k_number: "",
+                        split_start: "",
+                        split_end: "",
+                        annotate_threshold: "",
+                        prot_seq: "",
+                        ligand_typ: "",
+                        feat_typ: [],
+                    },
+                    fileList: [],
+                };
+            },
+            methods: {
+                handleChange(file, fileList) {
+                    this.fileList = fileList;
+                    console.log(this.fileList);
+                },
+                toggleInputs() {
+                    if (this.inputMethod === 'seq') {
+                        this.isSeqDisabled = false;
+                        this.isSeqFileDisabled = true;
+                        this.fileList = []; // 清空文件列表
+                    } else {
+                        this.isSeqDisabled = true;
+                        this.isSeqFileDisabled = false;
+                        this.formdata.prot_seq = '';
+                    }
+                },
+                async onSubmit() {
+                    this.formData = new FormData();
+                    this.formData.append("task_name", "esm2");
+                    this.formData.append("prot_id", this.formdata.prot_id);
+                    this.formData.append("chain_id", this.formdata.chain_id);
+                    this.formData.append("map_d_threshold", this.formdata.map_d_threshold);
+                    this.formData.append("map_k_number", this.formdata.map_k_number);
+                    this.formData.append("split_start", this.formdata.split_start);
+                    this.formData.append("split_end", this.formdata.split_end);
+                    this.formData.append("annotate_threshold", this.formdata.annotate_threshold);
+                    this.formData.append("prot_seq", this.formdata.prot_seq);
+                    this.formData.append("ligand_typ", this.formdata.ligand_typ);
+
+                    this.formdata.feat_typ.forEach((item) => {
+                        this.formData.append("feat_typ", item);
+                    });
+
+                    if (this.fileList.length > 0) {
+                        this.fileList.forEach((file, index) => {
+                            this.formData.append(`files`, file.raw);
+                        });
+                    }
+
+                    for (var pair of this.formData.entries()) {
+                        console.log(pair[0] + ", " + pair[1]);
+                    }
+                    try {
+                        const response = await fetch("/upload", {
+                            method: "POST",
+                            body: this.formData,
+                            headers: {
+                                Accept: "application/json",
+                            },
+                        });
+                        if (!response.ok) {
+                            throw new Error(`HTTP error! status: ${response.status}`);
+                        }
+                        const result = await response.json();
+                        this.task_id = result.task_id;
+                        console.log(result);
+                    } catch (error) {
+                        console.error("Error submitting form:", error);
+                    } finally {
+                        // 清空 fileList 数组
+                        this.fileList = [];
+                        // 重置表单数据
+                        this.formdata = {
+                            prot_id: "",
+                            chain_id: "",
+                            radio: 3,
+                            map_d_threshold: "",
+                            map_k_number: "",
+                            split_start: "",
+                            split_end: "",
+                            annotate_threshold: "",
+                            prot_seq: "",
+                            ligand_typ: "",
+                            feat_typ: [],
+                        };
+                        this.downloadResult();
+                    }
+                },
+                downloadResult() {
+                    if (this.task_id) {
+                        window.location.href = "/download/" + this.task_id;
+                    } else {
+                        alert("Failed");
+                    }
+                },
+            },
+        });
+    </script>
+</html>

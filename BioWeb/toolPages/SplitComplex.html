@@ -1,0 +1,254 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8" />
+        <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <link rel="stylesheet" href="https://unpkg.com/element-ui/lib/theme-chalk/index.css" />
+        <link rel="stylesheet" href="/BioWeb/styles/toolpage.css" />
+    </head>
+
+    <body>
+        <div id="app">
+            <div id="topSav" style="width: 800px;  height: 50px;">
+                <div>
+                    <span  style="font-size: 28px; color: black;font-weight:bold">Split Complex</span>
+                </div>
+            </div>
+
+            <div id="ntopSav">
+                <span style="font-size: 16px; color: gray">Split the protein complex file into single chain files</span>
+            </div>
+            
+            <div v-if="!result && !loading" id="threetable">
+                <div id="inputFile" style="margin-top: 20px; width: 600px;border: 1px solid rgb(219, 216, 216)">
+
+                    <el-form ref="form" style="margin: 20px 20px 0px 20px;" :model="formdata">
+                        <span class="inputstyle" style="font-weight: bold;">Input protein PDB structure</span>
+                        <el-radio-group v-model="inputMethod" @change="toggleInputs">
+                            <el-radio label="id" class="custom-radio">
+                                <div class="inputmargin">
+                                    <span class="inputstyle">Input the PDB ID of the protein structure.</span>
+                                </div>
+                            </el-radio>
+                            <div>
+                                <el-input placeholder="e.g. 1tup,8h1t" v-model="formdata.prot_id" class="changetext" :disabled="isIdDisabled">
+                                    <template slot="prepend"><span class="innerspan">PDB ID</span></template>
+                                </el-input>
+                            </div>
+                            <el-radio label="file" class="custom-radio">
+                                <div class="inputmargin">
+                                    <span class="inputstyle">Or upload the structure files(.pdb or .cif).</span>
+                                </div>
+                            </el-radio>    
+                            <div>
+                                <el-upload class="upload-demo" action="#" :file-list="fileList" :auto-upload="false" multiple :on-change="handleChange" ref="upload" :disabled="isPdbFileDisabled">
+                                    <el-button slot="trigger" size="small" style="position: sticky; margin-left: 10px; font-size: 18px; width: 200px; height: 40px; background-color: rgba(125, 122, 122, 0.091)" :disabled="isPdbFileDisabled">
+                                        upload
+                                    </el-button>
+                                </el-upload>
+                            </div> 
+                        </el-radio-group>
+
+                        <hr class="subsplitline">
+
+                        <span class="inputstyle" style="font-weight: bold;">Input Chain ID</span>
+
+                        <div class="inputmargin">
+                            <span class="inputstyle">Leave blank to get all chains</span>
+                        </div>
+                        
+                        <div>
+                            <el-input placeholder="e.g. A,B" v-model="formdata.chain_id" class="changetext">
+                                <template slot="prepend"><span class="innerspan">Chian ID</span></template>
+                            </el-input>
+                        </div>
+
+                        <hr class="subsplitline">
+
+                        <span class="inputstyle" style="font-weight: bold;">Run</span>
+
+                        <div>
+                            <el-button type="primary" @click="onSubmit" style="margin:20px 20px 20px 0px; font-size: 18px; width: 100px; height: 40px">submit</el-button>
+                        </div>
+                    </el-form>
+                </div>
+            </div>
+            <div v-else style="width: 100%;border: 1px solid rgb(121, 184, 247)">
+                <div id="result">
+                    <div style="display: flex;justify-content: center;align-items: center;background-color: rgb(121, 184, 247);">
+                        <span style="color: gray; font-size: 30px">Result</span>
+                    </div>
+
+                    <hr />
+
+                    <div v-if="loading" style="margin-top: 10px; font-size: 13px">
+                        <h3>Your job is currently running...</h3>
+                        <div id="show" style="font-size:18px">
+                            <p>The results will be shown on your screen when it is finished.</p>                    
+                            </div>
+                            <br>
+                    </div>
+                    <div v-else style="margin-top: 18px;margin-left: 10px;font-size: 13px;" id="resdisplay">
+                        <!-- <pre style="color: gray;width: 500px;" >{{ result.example }}</pre> -->
+                         <pre style="font-size: 8px;">{{result.example}}</pre>
+                        <div style="margin-top: 10px">
+                            <el-button type="primary"  @click="downloadResult" >Download</el-button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div id="note" style="margin-top: 20px; width: 600px; height: 200px; border: 0px solid rgb(219, 216, 216)">
+                <div>
+                    <span style="color: gray; font-size: 20px">Notes:</span>
+                </div>
+
+                <div style="margin-top: 10px; font-size: 16px">
+                    <span style="color: gray">
+                        1. The uploaded structure must be a protein-nucleic acid complex.
+                    </span>
+                </div>
+
+                <div style="margin-top: 10px">
+                    <span style="color: gray; font-size: 16px">
+                        2. The uploaded file must be in PDB format (.pdb or .cif).
+                    </span>
+                </div>
+            </div>
+        </div>
+    </body>
+
+    <script src="/BioWeb/scripts/vue.js"></script>
+    <script src="https://unpkg.com/element-ui/lib/index.js"></script>
+
+    <script>
+        new Vue({
+            el: "#app",
+            data() {
+                return {
+                    inputMethod: "id",
+                    isIdDisabled: false,
+                    isPdbFileDisabled: true,
+                    formdata: {
+                        prot_id: "",
+                        chain_id: "",
+                        map_d_threshold: "",
+                        map_k_number: "",
+                        split_start: "",
+                        split_end: "",
+                        annotate_threshold: "",
+                        prot_seq: "",
+                        ligand_typ: "",
+                        feat_typ: [],
+                    },
+                    fileList: [],
+                    result: null,
+                    loading: false,
+                };
+            },
+            methods: {
+                handleChange(file, fileList) {
+                    this.fileList = fileList;
+                    console.log(this.fileList);
+                },
+                toggleInputs() {
+                    if (this.inputMethod === 'id') {
+                        this.isIdDisabled = false;
+                        this.isPdbFileDisabled = true;
+                        this.fileList = []; // 清空文件列表
+                    } else {
+                        this.isIdDisabled = true;
+                        this.isPdbFileDisabled = false;
+                        this.formdata.prot_id = ''; // 清空 PDB ID
+                    }
+                },        
+                async onSubmit() {
+
+                    //测试加载
+                    // let loadingInstance= Loading.service(options);
+                    let loading1 = this.$loading({
+                    text: "", // 设置 loading 文本为 "加载中"
+                    spinner: "el-icon-loading", // 使用 Element UI 提供的加载图标
+                    background: 'rgba(0, 0, 0, 0.7)',
+                    target: document.querySelector("body"), // 将 loading 遮罩层挂载到页面 body 元素上
+                    });
+                    
+                    this.loading = true; 
+                    this.formData = new FormData();
+                    this.formData.append("task_name", "split_complex");
+                    this.formData.append("prot_id", this.formdata.prot_id);
+                    this.formData.append("chain_id", this.formdata.chain_id);
+                    this.formData.append("map_d_threshold", this.formdata.map_d_threshold);
+                    this.formData.append("map_k_number", this.formdata.map_k_number);
+                    this.formData.append("split_start", this.formdata.split_start);
+                    this.formData.append("split_end", this.formdata.split_end);
+                    this.formData.append("annotate_threshold", this.formdata.annotate_threshold);
+                    this.formData.append("prot_seq", this.formdata.prot_seq);
+                    this.formData.append("ligand_typ", this.formdata.ligand_typ);
+
+                    this.formdata.feat_typ.forEach((item) => {
+                        this.formData.append("feat_typ", item);
+                    });
+
+                    if (this.fileList.length > 0) {
+                        this.fileList.forEach((file, index) => {
+                            this.formData.append(`files`, file.raw);
+                        });
+                    }
+
+                    for (var pair of this.formData.entries()) {
+                        console.log(pair[0] + ", " + pair[1]);
+                    }
+                    try {
+                        const response = await fetch("/upload", {
+                            method: "POST",
+                            body: this.formData,
+                            headers: {
+                                Accept: "application/json",
+                            },
+                        });
+                        if (!response.ok) {
+                            throw new Error(`HTTP error! status: ${response.status}`);
+                        }
+                        const result = await response.json();
+                        this.task_id = result.task_id;
+                        this.result = result; 
+                        this.loading = false; 
+
+                        loading1.close(); // 调用 loading 实例的 close 方法关闭遮罩层
+                        
+                        console.log(result);
+                    } catch (error) {
+                        console.error("Error submitting form:", error);
+                        this.loading = false; 
+                    } finally {
+                        // 清空 fileList 数组
+                        this.fileList = [];
+                        // 重置表单数据
+                        this.formdata = {
+                            prot_id: "",
+                            chain_id: "",
+                            map_d_threshold: "",
+                            map_k_number: "",
+                            split_start: "",
+                            split_end: "",
+                            annotate_threshold: "",
+                            prot_seq: "",
+                            ligand_typ: "",
+                            feat_typ: [],
+                        };
+                        this.downloadResult();
+                    }
+                },
+                downloadResult() {
+                    if (this.task_id) {
+                        window.location.href = "/download/" + this.task_id;
+                    } else {
+                        alert("Failed");
+                    }
+                },
+            },
+        });
+    </script>
+</html>

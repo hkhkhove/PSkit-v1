@@ -1,0 +1,218 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8" />
+        <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <link rel="stylesheet" href="https://unpkg.com/element-ui/lib/theme-chalk/index.css" />
+        <link rel="stylesheet" href="/BioWeb/styles/toolpage.css" />
+    </head>
+
+    <body>
+        <div id="app" >
+            <div id="topSav" style="width: 800px; height: 50px;">
+                <div>
+                    <span style="font-size: 28px; color: black">Contact Map</span>
+                </div>
+            </div>
+            <div id="ntopSav">
+                <span style="font-size: 16px; color: gray"> Obtain the contact map of residues from protein structures based on spatial distance</span>
+            </div>
+            <div id="inputFile" style="margin-top: 20px; width: 600px;border: 1px solid rgb(219, 216, 216)">
+
+                <el-form ref="form" style="margin: 20px 20px 0px 20px;" :model="form">
+                    <span class="inputstyle" style="font-weight: bold;">Input protein PDB structure</span>
+                    <el-radio-group v-model="inputMethod" @change="toggleInputs">
+                        <el-radio label="id" class="custom-radio">
+                            <div class="inputmargin">
+                                <span class="inputstyle">Input the PDB ID of the protein structure.</span>
+                            </div>
+                        </el-radio>
+                        <div>
+                            <el-input placeholder="e.g. 1tup,8h1t" v-model="form.prot_id" class="changetext" :disabled="isIdDisabled">
+                                <template slot="prepend"><span class="innerspan">PDB ID</span></template>
+                            </el-input>
+                        </div>
+                        <el-radio label="file" class="custom-radio">
+                            <div class="inputmargin">
+                                <span class="inputstyle">Or upload the structure files(.pdb or .cif).</span>
+                            </div>
+                        </el-radio>    
+                        <div>
+                            <el-upload class="upload-demo" action="#" :file-list="fileList" :auto-upload="false" multiple :on-change="handleChange" ref="upload" :disabled="isPdbFileDisabled">
+                                <el-button slot="trigger" size="small" style="position: sticky; margin-left: 10px; font-size: 18px; width: 200px; height: 40px; background-color: rgba(125, 122, 122, 0.091)" :disabled="isPdbFileDisabled">
+                                    upload
+                                </el-button>
+                            </el-upload>
+                        </div> 
+                        
+                    </el-radio-group>
+
+                    <hr class="subsplitline">
+
+                    <span class="inputstyle" style="font-weight: bold;">Map Type</span>
+                    <div class="inputmargin">
+                        <el-radio-group v-model="task_name" style="margin-left: 20px">
+                            <el-radio :label="'d_map'">Spacial Dsitance Map</el-radio>
+                            <el-radio :label="'knn_map'">K-Nearest Neighbor Map</el-radio>
+                        </el-radio-group>
+                    </div>
+
+                    <hr class="subsplitline">
+
+                    <span class="inputstyle" style="font-weight: bold;">Input Threshold</span>
+                    <div class="inputmargin">
+                        <el-input placeholder="e.g. 20" v-model="form.map_d_threshold" class="changetext" :disabled="task_name==='knn_map'">
+                            <template slot="prepend"><span class="innerspan"style="display: flex; justify-content: center; align-items: center; width: 120px;">Distance Threshold</span></template>
+                        </el-input>
+                    </div>
+                    <div class="inputmargin">
+                        <el-input placeholder="e.g. 8" v-model="form.map_k_number" class="changetext" :disabled="task_name==='d_map'">
+                            <template slot="prepend"><span class="innerspan" style="display: flex; justify-content: center; align-items: center; width: 120px;">K Number</span></template>
+                        </el-input>
+                    </div>
+
+                    <hr class="subsplitline">
+
+                    <span class="inputstyle" style="font-weight: bold;">Run</span>
+
+                    <div>
+                        <el-button type="primary" @click="onSubmit" style="margin:20px 20px 20px 0px; font-size: 18px; width: 100px; height: 40px">submit</el-button>
+                    </div>
+
+                </el-form>
+            </div>
+            <div id="note" style="margin-top: 20px; width: 600px; height: 200px; border: 0px solid rgb(219, 216, 216)">
+                <div>
+                    <span style="color: gray; font-size: 20px">Notes:</span>
+                </div>
+
+                <div style="margin-top: 10px; font-size: 16px">
+                    <span style="color: gray">
+                        1. You can enter the PDB ID or upload a protein structure file to get a contact map.
+                    </span>
+                </div>
+
+                <div style="margin-top: 10px">
+                    <span style="color: gray; font-size: 16px">
+                        2. The uploaded file must be in PDB format (.pdb or .cif).
+                    </span>
+                </div>
+
+                <div style="margin-top: 10px">
+                    <span style="color: gray; font-size: 16px">
+                        3. In the distance map, values below the threshold are assigned a value of 1, while those above the threshold are assigned a value of 0. If the threshold is set to 0, the distance map reflects the actual distances.
+                    </span>
+                </div>
+
+                <div style="margin-top: 10px">
+                    <span style="color: gray; font-size: 16px">
+                        4. In the KNN map, the values of the k nearest residues to the target residue are set to 1, while all other values are set to 0.
+                    </span>
+                </div>
+            </div>
+        </div>
+    </body>
+    <script src="/BioWeb/scripts/vue.js"></script>
+    <script src="https://unpkg.com/element-ui/lib/index.js"></script>
+    <script>
+        new Vue({
+            el: "#app",
+            data() {
+                return {
+                    inputMethod: "id",
+                    isIdDisabled: false,
+                    isPdbFileDisabled: true,
+                    task_name: "d_map",
+                    form: {
+                        prot_id: "",
+                        map_d_threshold: 0,
+                        map_k_number: 0,
+                    },
+                    fileList: [],
+                };
+            },
+            computed: {
+                isFormValid() {
+                    if (this.inputMethod === 'id') {
+                        if(this.task_name === 'd_map') {
+                            return this.form.prot_id && this.form.map_d_threshold;
+                        } else if(this.task_name === 'knn_map') {
+                            return this.form.prot_id && this.form.map_k_number;
+                        }
+                    } else {
+                        if(this.task_name === 'd_map') {
+                            return this.fileList.length > 0 && this.form.map_d_threshold;
+                        } else if(this.task_name === 'knn_map') {
+                            return this.fileList.length > 0 && this.form.map_k_number;
+                        }
+                    }
+                }
+            },
+            methods: {
+                handleChange(file, fileList) {
+                    this.fileList = fileList;
+                    console.log(this.fileList);
+                },
+                toggleInputs() {
+                    if (this.inputMethod === 'id') {
+                        this.isIdDisabled = false;
+                        this.isPdbFileDisabled = true;
+                        this.fileList = []; 
+                    } else {
+                        this.isIdDisabled = true;
+                        this.isPdbFileDisabled = false;
+                        this.form.prot_id = '';
+                    }
+                }, 
+                async onSubmit() {
+                    if(!this.isFormValid) {
+                        alert("Please fill in all fields.");
+                        return;
+                    }
+
+                    formData = new FormData();
+                    formData.append("task_name", this.task_name);
+
+                    for (const key in this.form) {
+                        if (this.form.hasOwnProperty(key)) {
+                            console.log(key, this.form[key]);
+                            formData.append(key, this.form[key]);
+                        }
+                    }
+
+                    if (this.fileList.length > 0) {
+                        this.fileList.forEach((file) => {
+                            formData.append('files', file.raw);
+                        });
+                    }
+
+                    try {
+                        const response = await fetch("/upload", {
+                            method: "POST",
+                            body: formData,
+                            headers: {
+                                Accept: "application/json",
+                            },
+                        });
+                        if (!response.ok) {
+                            throw new Error(`HTTP error! status: ${response.status}`);
+                        }
+                        const result = await response.json();
+                        this.task_id = result.task_id;
+                        window.location.href = "/result/"+this.task_id;
+                    } catch (error) {
+                        console.error("Error submitting form:", error);
+                    } finally {
+                        this.fileList = [];
+                        this.form={
+                            prot_id: "",
+                            map_d_threshold: "",
+                            map_k_number: "",
+                        };
+                    }
+                },
+            },
+        });
+    </script>
+</html>

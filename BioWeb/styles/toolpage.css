@@ -1,0 +1,179 @@
+/* 清除浏览器设置 */
+html, body, div, span, applet, object, iframe,
+h1, h2, h3, h4, h5, h6, p, blockquote, pre,
+a, abbr, acronym, address, big, cite, code,
+del, dfn, em, img, ins, kbd, q, s, samp,
+small, strike, strong, sub, sup, tt, var,
+b, u, i, center,
+dl, dt, dd, ol, ul, li,
+fieldset, form, label, legend,
+table, caption, tbody, tfoot, thead, tr, th, td,
+article, aside, canvas, details, embed, 
+figure, figcaption, footer, header, hgroup, 
+menu, nav, output, ruby, section, summary,
+time, mark, audio, video {
+    margin: 0;
+    padding: 0;
+    border: 0;
+    font-size: 100%;
+    font: inherit;
+    vertical-align: baseline;
+}
+/* HTML5 display-role reset for older browsers */
+article, aside, details, figcaption, figure, 
+footer, header, hgroup, menu, nav, section {
+    display: block;
+}
+body {
+    line-height: 1;
+}
+ol, ul {
+    list-style: none;
+}
+blockquote, q {
+    quotes: none;
+}
+blockquote:before, blockquote:after,
+q:before, q:after {
+    content: '';
+    content: none;
+}
+table {
+    border-collapse: collapse;
+    border-spacing: 0;
+}
+
+
+
+body, html {  
+    height: 100%;  
+    margin: 0;  
+    padding: 0;  
+    /* display: flex;   */
+    justify-content: center; /* 水平居中 */  
+    /* align-items: center; 垂直居中   */
+    /* background-color: rgb(115, 116, 116); */
+} 
+
+
+#app{
+    display: flex;
+    justify-content:center;
+    flex-direction: column;
+    justify-items: center;
+    align-items: center;
+    height: auto;
+    /* background-color: rgb(163, 158, 158); */
+}
+
+#topSav{
+    /* background-color: rgb(233, 238, 233); */
+    /* margin-top: -450px; */
+    display: flex;
+    flex-direction: row;
+    justify-content: center;
+    align-items: center;
+    height: 100%;
+}
+
+#ntopSav{
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.linkstyle{
+    width: 80px;
+}
+
+.inputstyle{
+    font-size: 20px;
+    color: rgb(79, 77, 77);
+}
+
+.inputmargin{
+    margin-top: 20px;
+    margin-bottom: 20px;
+    margin-left: 0px;
+}
+
+.changetext{
+    width: 350px;
+    margin-left: 10px;
+}
+
+
+#inputFile{
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    /* box-shadow: 0 0 20px 0 #bbbbbc; */
+}
+
+
+/* 
+#note{
+    box-shadow: 0 0 20px 0 #bbbbbc;
+    
+} */
+
+#note div{
+    margin-left: 5px;
+    margin-top: 5px;
+}
+
+/* .el-button{
+    background-color: rgb(152, 177, 239) ;
+} */
+
+
+.custom-radio {
+    display: flex; 
+    align-items: center; 
+}
+
+.subsplitline {
+    border: none;              
+    border-top: 1px dashed rgb(219, 216, 216); 
+    margin: 20px 0;         
+}
+  
+/* 测试加载 */
+
+
+.el-loading-mask {
+    background-color: rgba(202, 231, 237, 0.941); /*半透明背景*/
+    background-image: url('/BioWeb/toolPages/image/loading.gif'); /* 设置背景图 */
+    background-size: 30%; /* 背景图覆盖整个元素 */
+    background-position: center; /* 背景图居中显示 */
+    background-repeat: no-repeat;
+    
+  }
+
+  .el-loading-text {
+    color: #070707 !important; 
+  }
+
+  #resdisplay{
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    height: 100%;
+  }
+
+  pre {
+    width:650px;
+    overflow: auto; overflow-y:hidden
+   }
+
+
+   hr{
+    margin: 0;
+    padding: 0;
+    color: #070707;
+   }
+
+   
+
+

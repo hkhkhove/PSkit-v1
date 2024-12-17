@@ -1,0 +1,269 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <title>Task Result</title>
+        <link rel="stylesheet" href="https://unpkg.com/element-ui/lib/theme-chalk/index.css">
+        <style>
+            #textBox {
+                padding: 20px 20px 20px 20px;
+                overflow-y: hidden;
+                overflow-x: auto;
+                border: 1px solid rgb(219, 216, 216);
+            }
+            #show span {
+                margin-top: 10px;
+                font-size: 16px;
+            }
+        </style>
+    </head>
+    <body>
+        
+        <div id="app">
+            <div id="result">
+                <div v-if="loading" id="waitting" style="margin-top: 100px; font-size: 13px; display: flex; justify-content: center; align-items: center; flex-direction: column">
+                    <div>
+                        <span style="font-size: 28px; color: black; font-weight: bold">Your job is currently running...</span>
+                    </div>
+
+                    <div id="show" style="margin-top: 30px; font-size: 25px; color: gray; display: flex; flex-direction: column; justify-content: center; align-items: center">
+                        <span> The results will be shown on your screen when it is finished. </span>
+                        <span>
+                            The results can be retrieved by using the link:
+                            {% raw %}
+                            <a :href="'http://172.31.226.126:8082/result/' + task_id" target="_blank" style="color: blue; text-decoration: underline">http://172.31.226.126:8082/result/{{task_id}}</a>
+                            {% endraw %}
+                        </span>
+                        <span style="margin-top: 50px">
+                            <img width="150px" height="30px" src="/BioWeb/images/loading.gif" />
+                        </span>
+                    </div>
+
+                    <div id="note" style="margin-top: 50px; width: 600px; height: 200px; border: 0px solid rgb(219, 216, 216)">
+                        <div>
+                            <span style="color: gray; font-size: 20px">Notes:</span>
+                        </div>
+
+                        <div style="margin-top: 10px; font-size: 16px">
+                            <span style="color: gray"> 1. This page will automatically update every 1 second. You can also refresh the page manually to check if results is ready. </span>
+                        </div>
+
+                        <div style="margin-top: 10px">
+                            <span style="color: gray; font-size: 16px"> 2. You may press CTRL + D to bookmark this page to view your results later. </span>
+                        </div>
+
+                        <div style="margin-top: 10px">
+                            <span style="color: gray; font-size: 16px"> 3. Results are stored for 7 days. </span>
+                        </div>
+                    </div>
+                </div>
+                <div v-else id="resDisplay" style="margin-top: 18px; margin-left: 10px; font-size: 13px">
+                    <div id="success" v-if="task.status==='finished'">
+                        <div style="display: flex; justify-content: center; align-items: center">
+                            {% raw %}
+                            <span style="color: gray; font-size: 30px">Result of {{current_key}}</span>
+                            {% endraw %}
+                        </div>
+                        <div style="margin-top: 10px; display: flex; justify-content: center">
+                            <div v-if="result_keys.length > 1">
+                                <el-button @click="next" style="margin-right: 10px;margin-bottom: 10px;">Next result</el-button>
+                            </div>
+                            <el-button type="primary" @click="downloadResult" style="margin-bottom: 10px;">Download</el-button>
+                        </div>
+                        <div id="putTable" v-if="display_mode==='table'">
+                            <el-table :data="task.results[current_key]" border fit style="width: 100%">
+                                <el-table-column v-for="(value, key) in task.results[current_key][0]" :key="key" :prop="key" :label="key" :min-width="100"> </el-table-column>
+                            </el-table>
+                        </div>
+                        <div id="putHeatmap" v-if="display_mode==='heatmap'">
+                            <div id="picture" ref="picture" style="width: 700px; height: 700px"></div>
+                        </div>
+                        <div id="putText" v-if="display_mode==='plain'">
+                            <span>"Please download and check the results."</span>
+                        </div>
+                    </div>
+                    <div v-else id="error" style="margin-top: 100px; font-size: 13px; display: flex; justify-content: center; align-items: center; flex-direction: column">
+                        <div>
+                            <span style="font-size: 28px; color: gray; font-weight: bold">Your job failed...</span>
+                        </div>
+                        <div id="show" style="margin-top: 30px; font-size: 25px; color: black; display: flex; flex-direction: column; justify-content: center; align-items: center">
+                            <span> The error message is: </span>
+                            {% raw %}
+                            <span> {{task.error}} </span>
+                            {% endraw %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </body>
+
+
+    <script src="https://unpkg.com/vue@2/dist/vue.js"></script>
+    <script src="https://unpkg.com/element-ui/lib/index.js"></script>
+    <script src="/BioWeb/scripts/echarts.min.js"></script>
+
+    <script type="application/json" id="render-data">
+        {
+            "task_id": {{ task_id | tojson }}
+        }
+    </script>
+
+
+    <script>
+        new Vue({
+            el: "#app",
+            data: {
+                task:{},
+                task_id: "",
+                loading: true,
+                result_keys: [],
+                current_index: 0,
+                current_key: "",
+                intervalId: "",
+                display_mode: "table",
+                table_display: ["annotate_complex", "extract_fragment", "handcraft", "nbrpred"],
+                heatmap_display: ["d_map", "knn_map"],
+                plain_display: ["esm2", "saprot", "split_complex", "cluster"],
+            },
+            methods: {
+                initPage() {
+                    const renderDataElement = document.getElementById("render-data");
+                    if (renderDataElement) {
+                        const renderData = JSON.parse(renderDataElement.textContent);
+                        this.task_id = renderData.task_id;
+                    }
+                },
+                downloadResult() {
+                    if (this.task_id) {
+                        window.location.href = "/download/" + this.task_id;
+                    } else {
+                        alert("Failed");
+                    }
+                },
+                next() {
+                    if (this.current_index < this.result_keys.length) {
+                        this.current_index = (this.current_index + 1) % this.result_keys.length;
+                        this.current_key = this.result_keys[this.current_index];
+                        if (this.display_mode === "heatmap") {
+                            this.contactMap(); 
+                        }
+                    }
+                },
+                async updatePage() {
+                    try {
+                        const task = await fetch("/api/result/" + this.task_id);
+                        const data = await task.json();
+                        this.task = data;
+                    } catch (error) {
+                        console.error("Error fetching data:", error);
+                    }
+                    if (this.task.status === "finished") {
+                        this.result_keys = Object.keys(this.task.results);
+                        this.current_key = this.result_keys[this.current_index];
+
+                        if (this.table_display.includes(this.task.name)) {
+                            this.display_mode = "table";
+                        } else if (this.heatmap_display.includes(this.task.name)) {
+                            this.display_mode = "heatmap";
+                        } else {
+                            this.display_mode = "plain";
+                        }
+
+                        this.loading = false;
+                        clearInterval(this.intervalId);
+
+                        if (this.display_mode === "heatmap") {
+                            this.contactMap();
+                        }
+                    } else if (this.task.status === "failed") {
+                        this.loading = false;
+                        clearInterval(this.intervalId);
+                    }
+                },
+                contactMap() {
+                    this.$nextTick(() => {
+                        console.log(this.task.results[this.current_key]);
+                        let contact_map = echarts.init(this.$refs.picture);
+                        let mapData=[];
+                        let axis=this.task.results[this.current_key][0];
+                        let length=axis.length;
+                        let upperTri=this.task.results[this.current_key][1];
+                        //从上三角矩阵还原整个对称矩阵
+                        for(let row=0;row<length;row++){
+                            for(let col=0;col<length;col++){
+                                if(row<=col){
+                                    mapData.push([row,col,upperTri[row*length+col-row*(row+1)/2]]);
+                                }else{
+                                    mapData.push([row,col,upperTri[col*length+row-col*(col+1)/2]]);
+                                }
+                            }
+                        }
+                        console.log(mapData);
+                        let option = {
+                            tooltip: {
+                                position: 'top',
+                                trigger: 'item',
+                                formatter: function (params) {
+                                    return axis[params.value[0]] + ' - ' + axis[params.value[1]] + '<br>Distance: ' + params.value[2]+' Å';
+                                }
+                            },
+                            grid: {
+                                height: '50%',
+                                top: '10%'
+                            },
+                            xAxis: {
+                                type: 'category',
+                                data: axis,
+                                position: 'top',
+                            },
+                            yAxis: {
+                                type: 'category',
+                                data: axis,
+                                inverse: true 
+                            },
+                            //视觉映射组件（颜色渐变条）
+                            visualMap: {
+                                min: 0,
+                                max: 100,
+                                calculable: true, //是否显示拖拽用的手柄
+                                hoverLink: true,//鼠标悬浮到 visualMap 组件上时，鼠标位置对应的数值 在 图表中对应的图形元素，会高亮
+                                orient: 'horizontal', 
+                                left: 'center', 
+                                color: ['#ffffcc', '#e6f7cc', '#ccf2ff', '#99e6ff', '#66ccff','#3399ff','#0073e6','#0059b3','#004080','#003366']
+                            },
+                            legend:{
+                                data:[this.current_key],
+                                left: 'center', 
+                                top: 'top', 
+                                textStyle: {
+                                    color: '#000', 
+                                    fontSize: 14
+                                }
+                            },
+                            series: [{
+                                name: this.current_key,
+                                type: 'heatmap',
+                                data: mapData,
+                                label: {
+                                    show: false,
+                                },
+                                emphasis: {
+                                    itemStyle: {
+                                        shadowBlur: 10,
+                                        shadowColor: 'rgba(0, 0, 0, 0.5)'
+                                    }
+                                }
+                            }]
+                        };
+                        contact_map.setOption(option);
+                    });
+                    
+                },
+            },
+            mounted() {
+                this.initPage();
+                this.intervalId = setInterval(this.updatePage, 1000);
+            },
+        });
+    </script>
+</html>

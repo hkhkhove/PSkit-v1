@@ -1,0 +1,148 @@
+/* 清除浏览器默认设置 */
+html, body, div, span, applet, object, iframe,
+h1, h2, h3, h4, h5, h6, p, blockquote, pre,
+a, abbr, acronym, address, big, cite, code,
+del, dfn, em, img, ins, kbd, q, s, samp,
+small, strike, strong, sub, sup, tt, var,
+b, u, i, center,
+dl, dt, dd, ol, ul, li,
+fieldset, form, label, legend,
+table, caption, tbody, tfoot, thead, tr, th, td,
+article, aside, canvas, details, embed, 
+figure, figcaption, footer, header, hgroup, 
+menu, nav, output, ruby, section, summary,
+time, mark, audio, video {
+    margin: 0;
+    padding: 0;
+    border: 0;
+    font-size: 100%;
+    font: inherit;
+    vertical-align: baseline;
+}
+/* HTML5 display-role reset for older browsers */
+article, aside, details, figcaption, figure, 
+footer, header, hgroup, menu, nav, section {
+    display: block;
+}
+body {
+    line-height: 1;
+}
+ol, ul {
+    list-style: none;
+}
+blockquote, q {
+    quotes: none;
+}
+blockquote:before, blockquote:after,
+q:before, q:after {
+    content: '';
+    content: none;
+}
+table {
+    border-collapse: collapse;
+    border-spacing: 0;
+}
+
+
+
+
+.el-header {
+    background-color: #ffffff;
+    color: #333;
+    line-height: 60px;
+  }
+  
+  .el-aside {
+    color: #333;
+  }
+/* 重置body的默认外边距和内边距 */  
+body{  
+    display: block;
+    margin: 0px;
+    height: 100%;
+}
+
+
+#titleSav{
+    display: flex;
+    flex-direction: row;
+    width: 100%;
+
+
+}
+
+#app{
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    height: auto;
+    
+}
+
+#start{
+    display: flex;
+    justify-content: flex-start;    
+}
+
+#end{
+    display: flex;
+    flex:1;
+    justify-content: flex-end;
+    background-color: #000000;
+}
+
+.topSav{
+    /* width: 700px; */
+    height: 100%;
+    width: 100%;
+}
+
+
+/* element.style {
+    margin-top: 0px;
+    margin-left: 0px;
+    margin-bottom: 0px;
+    margin-right: 0px;
+} */
+
+
+#main{
+    display: flex;
+    /* justify-content: left; */
+    flex-direction: row;
+    /* height: 100%; */
+    height: 800px;
+    /* width: 100%; */
+    /* background-color: #191919; */
+}
+
+#leftmain{
+    display: flex;
+    justify-content: flex-start;  
+    /* border-radius: 50%; */
+    /* height: 800px; */
+    /* box-shadow: 0 0 20px 0 #bbbbbc; */
+    
+}
+
+#rightmain{
+
+    display: flex;
+    flex:1;
+    justify-content: flex-end;
+    align-items: center;
+    
+    /* box-shadow: 0 0 20px 0 #bbbbbc; */
+    margin-left: 10px;
+    /* margin-right: 500px; */
+}
+
+
+
+
+
+
+
+
+
+
